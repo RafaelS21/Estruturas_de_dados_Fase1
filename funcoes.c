@@ -1,0 +1,555 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <string.h>
+#include "data.h"
+#include <stdlib.h>
+
+
+// Inserir Veiculos:
+
+Veiculos* inserirVeiculos(Veiculos* inicio, int cod, char tipo[], float bateria, float autonomia) {
+    Veiculos* novoVeiculo = (Veiculos*)malloc(sizeof(Veiculos));
+    novoVeiculo->codigo = cod;
+    strcpy(novoVeiculo->tipo, tipo);
+    novoVeiculo->bateria = bateria;
+    novoVeiculo->autonomia = autonomia;
+    novoVeiculo->seguinte = inicio;
+    inicio = novoVeiculo;
+    return inicio;
+}
+
+// Listar os veiculso adicionados:
+
+void listarVeiculos(Veiculos* inicio)
+{
+    if (inicio == NULL) {
+        printf("A lista de veículos está vazia.\n");
+        return;
+    }
+    printf("Lista de veículos:\n");
+    while (inicio != NULL)
+    {
+        printf("%d %s %.2f %.2f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
+        inicio = inicio->seguinte;
+    }
+}
+
+// Existe Veiculos:
+int existeVeiculos(Veiculos* inicio, int codigo)
+{
+    Veiculos* atual = inicio;
+    while (atual != NULL) {
+        if (atual->codigo == codigo) {
+            return 1;
+        }
+        atual = atual->seguinte;
+    }
+    return 0;
+}
+
+//Remover veiculos:
+
+Veiculos* removerVeiculos(Veiculos* inicio, int cod)
+{
+    Veiculos* anterior, * atual;
+    anterior = NULL;
+    atual = inicio;
+
+    while (atual != NULL)
+    {
+        if (atual->codigo == cod)
+        {
+            if (anterior == NULL) // o código a remover é o primeiro da lista
+            {
+                inicio = atual->seguinte;
+                free(atual);
+                return inicio;
+            }
+            else // o código a remover está no meio ou no fim da lista
+            {
+                anterior->seguinte = atual->seguinte;
+                free(atual);
+                return inicio;
+            }
+        }
+        anterior = atual;
+        atual = atual->seguinte;
+    }
+
+    printf("Não foi encontrado um registo com o código %d.\n", cod);
+    return inicio;
+}
+
+//Guardar Veiculos
+
+int guardarVeiculos(Veiculos* inicio)
+{
+    FILE* ficheiro;
+    ficheiro = fopen("veiculos.txt", "w");
+    if (ficheiro == NULL) {
+        printf("Não foi possível abrir o ficheiro.\n");
+        return 0;
+    }
+
+    Veiculos* aux = inicio;
+    while (aux != NULL)
+    {
+        fprintf(ficheiro, "%d %s %.2f %.2f\n", aux->codigo, aux->tipo, aux->bateria, aux->autonomia);
+        aux = aux->seguinte;
+    }
+
+    fclose(ficheiro);
+    return 1;
+}
+
+
+// Ler veiculos
+Veiculos* lerVeiculos()
+{
+    FILE* ficheiro;
+    ficheiro = fopen("veiculos.txt", "r");
+    if (ficheiro == NULL) {
+        printf("Não foi possível abrir o ficheiro.\n");
+        return NULL;
+    }
+
+    int codigo;
+    char tipo[20];
+    float bateria;
+    float autonomia;
+
+    Veiculos* inicio = NULL;
+
+    while (fscanf(ficheiro, "%d %s %f %f", &codigo, tipo, &bateria, &autonomia) != EOF)
+    {
+        inicio = inserirVeiculos(inicio, codigo, tipo, bateria, autonomia);
+    }
+
+    fclose(ficheiro);
+    return inicio;
+}
+
+// Inserir Clientes
+
+Clientes* inserirClientes(Clientes* inicio, int codigo, char nome[], char nif[], char email[]) {
+    // Verificar se já existe um cliente com o mesmo código
+    if (existeClientes(inicio, codigo)) {
+        printf("Já existe um cliente com o código %d\n", codigo);
+        return inicio;
+    }
+
+    // Alocar memória para o novo cliente
+    Clientes* novo = (Clientes*)malloc(sizeof(Clientes));
+    if (novo == NULL) {
+        printf("Erro ao alocar memória para o novo cliente\n");
+        return inicio;
+    }
+
+    // Preencher os dados do novo cliente
+    novo->codigo = codigo;
+    strcpy(novo->nome, nome);
+    strcpy(novo->nif, nif);
+    strcpy(novo->email, email);
+    novo->seguinte = NULL;
+
+    // Adicionar o novo cliente ao fim da lista
+    if (inicio == NULL) {
+        inicio = novo;
+    }
+    else {
+        // Ler a lista existente do arquivo
+        Clientes* atual = inicio;
+        while (atual->seguinte != NULL) {
+            atual = atual->seguinte;
+        }
+        atual->seguinte = novo;
+    }
+
+    // Escrever a lista completa de volta para o arquivo
+    if (!guardarClientes(inicio)) {
+        printf("Erro ao guardar a lista de clientes no arquivo\n");
+        // Desfazer a inserção do novo cliente da lista
+        if (inicio == novo) {
+            inicio = NULL;
+        }
+        else {
+            Clientes* atual = inicio;
+            while (atual->seguinte != novo) {
+                atual = atual->seguinte;
+            }
+            atual->seguinte = NULL;
+        }
+        free(novo);
+        return inicio;
+    }
+
+    printf("Cliente com o código %d inserido com sucesso\n", codigo);
+    return inicio;
+}
+
+
+// Existe Clientes
+
+int existeClientes(Clientes* inicio, int codigo) {
+    Clientes* atual = inicio;
+    while (atual != NULL) {
+        if (atual->codigo == codigo) {
+            return 1; // O código já existe na lista ligada
+        }
+        atual = atual->seguinte;
+    }
+    return 0; // O código não existe na lista ligada
+}
+
+// Guardar
+int guardarClientes(Clientes* inicio) {
+    FILE* fp;
+    char filename[] = "clientes.txt"; // file name to save the clients list
+    fp = fopen(filename, "w"); // open the file in write mode
+
+    if (fp == NULL) {
+        printf("Erro ao abrir o arquivo %s.\n", filename);
+        return 0;
+    }
+
+    // write each client's information to the file
+    while (inicio != NULL) {
+        fprintf(fp, "%d %s %s %s\n", inicio->codigo, inicio->nome, inicio->nif, inicio->email);
+        inicio = inicio->seguinte;
+    }
+
+    fclose(fp); // close the file
+    return 1;
+}
+
+// listar
+
+void listarClientes(Clientes* inicio) {
+    if (inicio == NULL) {
+        printf("A lista de clientes está vazia.\n");
+    }
+    else {
+        printf("Lista de clientes:\n");
+        while (inicio != NULL) {
+            printf("Código: %d\n", inicio->codigo);
+            printf("Nome: %s\n", inicio->nome);
+            printf("NIF: %s\n", inicio->nif);
+            printf("Email: %s\n", inicio->email);
+            printf("\n");
+            inicio = inicio->seguinte;
+        }
+
+    }
+}
+Clientes* removerClientes(Clientes* inicio, int codigo) {
+    if (inicio == NULL) {
+        printf("A lista de clientes está vazia\n");
+        return inicio;
+    }
+
+    Clientes* atual = inicio;
+    Clientes* anterior = NULL;
+
+    // Procurar o cliente com o código especificado
+    while (atual != NULL && atual->codigo != codigo) {
+        anterior = atual;
+        atual = atual->seguinte;
+    }
+
+    // Se não encontrou o cliente com o código especificado
+    if (atual == NULL) {
+        printf("Não existe um cliente com o código %d\n", codigo);
+        return inicio;
+    }
+
+    // Se o cliente a remover é o primeiro da lista
+    if (anterior == NULL) {
+        inicio = atual->seguinte;
+    }
+    else {
+        anterior->seguinte = atual->seguinte;
+    }
+
+    printf("Cliente com o código %d removido com sucesso\n", codigo);
+    free(atual);
+    return inicio;
+}
+
+
+Clientes* alterarClientes(Clientes* inicio, int codigo, char nome[], char nif[], char email[]) {
+    // Verificar se o cliente existe
+    if (!existeClientes(inicio, codigo)) {
+        printf("Não existe um cliente com o código %d\n", codigo);
+        return inicio;
+    }
+
+    // Procurar o cliente a ser alterado
+    Clientes* atual = inicio;
+    while (atual != NULL && atual->codigo != codigo) {
+        atual = atual->seguinte;
+    }
+
+    // Alterar os dados do cliente
+    strcpy(atual->nome, nome);
+    strcpy(atual->nif, nif);
+    strcpy(atual->email, email);
+
+    // Escrever a lista completa de volta para o arquivo
+    if (!guardarClientes(inicio)) {
+        printf("Erro ao guardar a lista de clientes no arquivo\n");
+        // Desfazer a alteração dos dados do cliente
+        strcpy(atual->nome, "");
+        strcpy(atual->nif, "");
+        strcpy(atual->email, "");
+    }
+
+    printf("Dados do cliente com o código %d alterados com sucesso\n", codigo);
+    return inicio;
+}
+
+Gestores* inserirGestores(Gestores* inicio, int codigo, char nome[], char email[]) {
+    Gestores* novoGestor = (Gestores*)malloc(sizeof(Gestores));
+    if (novoGestor == NULL) { // Verificar se foi possível alocar memória
+        printf("Erro: nao foi possivel alocar memoria para um novo gestor.\n");
+        return inicio;
+    }
+    novoGestor->codigo = codigo;
+    strcpy(novoGestor->nome, nome);
+    strcpy(novoGestor->email, email);
+    novoGestor->seguinte = NULL;
+
+    Gestores* gestorAtual = NULL;
+    if (inicio == NULL) { // Se a lista estiver vazia, o novo gestor é o primeiro
+        return novoGestor;
+    }
+    else {
+        gestorAtual = inicio;
+        while (gestorAtual->seguinte != NULL) { // Percorrer a lista até chegar ao último gestor
+            gestorAtual = gestorAtual->seguinte;
+        }
+        gestorAtual->seguinte = novoGestor; // O último gestor passa a apontar para o novo gestor
+        return inicio;
+    }
+}
+
+
+
+void listarGestores(Gestores* inicio) {
+    Gestores* gestorAtual = inicio;
+    while (gestorAtual != NULL) {
+        printf("Código: %d\n", gestorAtual->codigo);
+        printf("Nome: %s\n", gestorAtual->nome);
+        printf("Email: %s\n", gestorAtual->email);
+        printf("\n");
+        gestorAtual = gestorAtual->seguinte;
+    }
+}
+
+int existeGestores(Gestores* inicio, int codigo) {
+    Gestores* gestorAtual = inicio;
+    while (gestorAtual != NULL) {
+        if (gestorAtual->codigo == codigo) {
+            return 1;
+        }
+        gestorAtual = gestorAtual->seguinte;
+    }
+    return 0;
+}
+int guardarGestores(Gestores* inicio) {
+    FILE* arquivo;
+    Gestores* gestorAtual;
+
+    // Abrir o arquivo para escrita
+    arquivo = fopen("gestores.txt", "w");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir arquivo para escrita.\n");
+        return 0;
+    }
+
+    // Percorrer a lista de gestores e escrever cada registro no arquivo
+    gestorAtual = inicio;
+    while (gestorAtual != NULL) {
+        fprintf(arquivo, "%d,%s,%s\n", gestorAtual->codigo, gestorAtual->nome, gestorAtual->email);
+        gestorAtual = gestorAtual->seguinte;
+    }
+
+    // Fechar o arquivo
+    fclose(arquivo);
+    return 1;
+}
+Gestores* lerGestores() {
+    FILE* arquivo;
+    Gestores* inicio = NULL;
+    Gestores* gestorAtual = NULL; // Inicializa a variável gestorAtual com NULL
+
+    // Abrir o arquivo para leitura
+    arquivo = fopen("gestores.txt", "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir arquivo para leitura.\n");
+        return NULL;
+    }
+
+    // Ler cada linha do arquivo e criar um novo gestor com os dados lidos
+    while (!feof(arquivo)) {
+        int codigo;
+        char nome[50];
+        char email[50];
+
+        if (fscanf(arquivo, "%d,%[^,],%s\n", &codigo, nome, email) != 3) {
+            break; // Se a leitura não for bem sucedida, sair do loop
+        }
+
+        Gestores* novoGestor = (Gestores*)malloc(sizeof(Gestores));
+        if (novoGestor == NULL) { // Verificar se foi possível alocar memória
+            printf("Erro: nao foi possivel alocar memoria para um novo gestor.\n");
+            break; // Se não foi possível alocar memória, sair do loop
+        }
+        novoGestor->codigo = codigo;
+        strcpy(novoGestor->nome, nome);
+        strcpy(novoGestor->email, email);
+        novoGestor->seguinte = NULL;
+
+        if (inicio == NULL) { // Se a lista estiver vazia, o novo gestor é o primeiro
+            inicio = novoGestor;
+            gestorAtual = novoGestor;
+        }
+        else {
+            gestorAtual->seguinte = novoGestor; // O último gestor passa a apontar para o novo gestor
+            gestorAtual = gestorAtual->seguinte; // Atualizar o ponteiro para o último gestor
+        }
+    }
+
+    // Fechar o arquivo
+    fclose(arquivo);
+    
+    return inicio;
+}
+
+Gestores* removerGestores(Gestores* inicio, int codigo) {
+    Gestores* gestorAnterior = NULL;
+    Gestores* gestorAtual = inicio;
+
+    // Percorrer a lista até encontrar o gestor com o código especificado
+    while (gestorAtual != NULL && gestorAtual->codigo != codigo) {
+        gestorAnterior = gestorAtual;
+        gestorAtual = gestorAtual->seguinte;
+    }
+
+    // Se não encontrou o gestor com o código especificado, retornar a lista original
+    if (gestorAtual == NULL) {
+        return inicio;
+    }
+
+    // Se o gestor a ser removido é o primeiro da lista
+    if (gestorAnterior == NULL) {
+        inicio = gestorAtual->seguinte;
+    }
+    // Se o gestor a ser removido não é o primeiro da lista
+    else {
+        gestorAnterior->seguinte = gestorAtual->seguinte;
+    }
+
+    // Liberar a memória alocada pelo gestor removido
+    free(gestorAtual);
+
+    return inicio;
+}
+
+
+/*
+Utilizadores* inserirUtilizadores(Utilizadores* inicio, char* email, char* password, int tipo) {
+    Utilizadores* novo = malloc(sizeof(Utilizadores));
+    strcpy(novo->email, email);
+    strcpy(novo->password, password);
+    novo->tipo = tipo;
+    novo->proximo = inicio;
+    return novo;
+}
+
+void listarUtilizadores(Utilizadores* inicio) {
+    Utilizadores* atual = inicio;
+    while (atual != NULL) {
+        printf("Email: %s, Password: %s, Tipo: %d\n", atual->email, atual->password, atual->tipo);
+        atual = atual->proximo;
+    }
+}
+
+int existeUtilizadores(Utilizadores* inicio, char* email) {
+    Utilizadores* atual = inicio;
+    while (atual != NULL) {
+        if (strcmp(atual->email, email) == 0) {
+            return 1;
+        }
+        atual = atual->proximo;
+    }
+    return 0;
+}
+
+Utilizadores* removerUtilizadores(Utilizadores* inicio, char* email) {
+    Utilizadores* atual = inicio;
+    Utilizadores* anterior = NULL;
+
+    while (atual != NULL) {
+        if (strcmp(atual->email, email) == 0) {
+            if (anterior == NULL) {
+                inicio = atual->proximo;
+            }
+            else {
+                anterior->proximo = atual->proximo;
+            }
+            free(atual);
+            return inicio;
+        }
+        anterior = atual;
+        atual = atual->proximo;
+    }
+
+    return inicio;
+}
+
+int guardarUtilizadores(Utilizadores* inicio) {
+    FILE* fp;
+    fp = fopen("utilizadores.txt", "w");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo.\n");
+        return 0;
+    }
+    Utilizadores* atual = inicio;
+    while (atual != NULL) {
+        fprintf(fp, "%s;%s;%d\n", atual->email, atual->password, atual->tipo);
+        atual = atual->proximo;
+    }
+    fclose(fp);
+    return 1;
+}
+
+Utilizadores* lerUtilizadores() {
+    FILE* fp;
+    fp = fopen("utilizadores.txt", "r");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo.\n");
+        return NULL;
+    }
+    Utilizadores* inicio = NULL;
+    char linha[1024];
+    while (fgets(linha, 1024, fp) != NULL) {
+        char* email = strtok(linha, ";");
+        char* password = strtok(NULL, ";");
+        char* tipo_str = strtok(NULL, ";");
+        int tipo = atoi(tipo_str);
+        inicio = inserirUtilizadores(inicio, email, password, tipo);
+    }
+    fclose(fp);
+    return inicio;
+}
+
+int loginUtilizador(Utilizadores* inicio, char* email, char* password) {
+    Utilizadores* atual = inicio;
+    while (atual != NULL) {
+        if (strcmp(atual->email, email) == 0 && strcmp(atual->password, password) == 0) {
+            return atual->tipo;
+        }
+        atual = atual->proximo;
+    }
+    return -1;
+}
+*/
