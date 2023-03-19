@@ -6,16 +6,24 @@
 
 // Inserir Veiculos:
 
-Veiculos* inserirVeiculos(Veiculos* inicio, int cod, char tipo[], float bateria, float autonomia) {
+Veiculos* inserirVeiculos(Veiculos* inicio, int codigo, char tipo[], float bateria, float autonomia) {
+    // aloca memória para o novo veículo
     Veiculos* novoVeiculo = (Veiculos*)malloc(sizeof(Veiculos));
-    novoVeiculo->codigo = cod;
-    strcpy(novoVeiculo->tipo, tipo);
+    if (novoVeiculo == NULL) {
+        printf("Erro: não foi possível alocar memória\n");
+        return inicio;
+    }
+    // preenche os campos do novo veículo
+    novoVeiculo->codigo = codigo;
+    strncpy(novoVeiculo->tipo, tipo, sizeof(novoVeiculo->tipo) - 1);
+    novoVeiculo->tipo[sizeof(novoVeiculo->tipo) - 1] = '\0'; 
     novoVeiculo->bateria = bateria;
     novoVeiculo->autonomia = autonomia;
-    novoVeiculo->seguinte = inicio;
-    inicio = novoVeiculo;
-    return inicio;
+    novoVeiculo->geo = 0; // valor padrão para geo
+    novoVeiculo->seguinte = inicio; // faz o novo veículo apontar para o início da lista
+    return novoVeiculo; // retorna o novo início da lista
 }
+
 
 // Listar os veiculso adicionados:
 
@@ -28,10 +36,11 @@ void listarVeiculos(Veiculos* inicio)
     printf("Lista de veículos:\n");
     while (inicio != NULL)
     {
-        printf("%d %s %.2f %.2f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
+        printf("%d %s %f %f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
         inicio = inicio->seguinte;
     }
 }
+
 
 // Existe Veiculos:
 int existeVeiculos(Veiculos* inicio, int codigo)
@@ -127,6 +136,9 @@ Veiculos* lerVeiculos()
     fclose(ficheiro);
     return inicio;
 }
+
+
+
 
 // Inserir Clientes
 
@@ -454,36 +466,111 @@ Gestores* removerGestores(Gestores* inicio, int codigo) {
     return inicio;
 }
 
+Clientes* lerClientes() {
+    FILE* fp;
+    fp = fopen("clientes.txt", "r");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo.\n");
+        return NULL;
+    }
+    Clientes* inicio = NULL;
+    char linha[200];
+    while (fgets(linha, 200, fp) != NULL) {
+        char* token;
+        token = strtok(linha, ";");
+        int codigo = atoi(token);
+        token = strtok(NULL, ";");
+        char nome[50];
+        strcpy(nome, token);
+        token = strtok(NULL, ";");
+        char nif[50];
+        strcpy(nif, token);
+        token = strtok(NULL, ";");
+        char email[50];
+        strcpy(email, token);
+        inicio = inserirClientes(inicio, codigo, nome, nif, email);
+    }
+    fclose(fp);
+    return inicio;
+}
 
 /*
-Utilizadores* inserirUtilizadores(Utilizadores* inicio, char* email, char* password, int tipo) {
-    Utilizadores* novo = malloc(sizeof(Utilizadores));
-    strcpy(novo->email, email);
-    strcpy(novo->password, password);
-    novo->tipo = tipo;
-    novo->proximo = inicio;
-    return novo;
-}
+int fazerLogin(Utilizadores* inicio) {
+    char email[50];
+    char password[50];
 
-void listarUtilizadores(Utilizadores* inicio) {
+    printf("Digite seu email: ");
+    scanf("%s", email);
+    printf("Digite sua password: ");
+    scanf("%s",password);
+
     Utilizadores* atual = inicio;
     while (atual != NULL) {
-        printf("Email: %s, Password: %s, Tipo: %d\n", atual->email, atual->password, atual->tipo);
-        atual = atual->proximo;
-    }
-}
-
-int existeUtilizadores(Utilizadores* inicio, char* email) {
-    Utilizadores* atual = inicio;
-    while (atual != NULL) {
-        if (strcmp(atual->email, email) == 0) {
+        if (strcmp(atual->email, email) == 0 && strcmp(atual->password, password) == 0) {
+            if (atual->tipo == 1) {
+                menuCliente();
+            }
+            else if (atual->tipo == 2) {
+                menuGestor();
+            }
             return 1;
         }
         atual = atual->proximo;
     }
+
+    printf("Email ou password incorretos.\n");
     return 0;
 }
 
+*/
+
+Utilizadores* inserirUtilizadores(Utilizadores* inicio, char* email, char* password, char tipo_utilizador) {
+    Utilizadores* novo_utilizador = (Utilizadores*)malloc(sizeof(Utilizadores));
+    strcpy(novo_utilizador->email, email);
+    strcpy(novo_utilizador->password, password);
+    novo_utilizador->tipo_utilizador = tipo_utilizador;
+    novo_utilizador->proximo = NULL;
+
+    if (inicio == NULL) {
+        inicio = novo_utilizador;
+    }
+    else {
+        Utilizadores* ultimo = inicio;
+        while (ultimo->proximo != NULL) {
+            ultimo = ultimo->proximo;
+        }
+        ultimo->proximo = novo_utilizador;
+    }
+
+    return inicio;
+}
+// Função que lista todos os utilizadores da lista ligada
+void listarUtilizadores(Utilizadores* inicio) {
+    Utilizadores* atual = inicio;
+
+    while (atual != NULL) {
+        printf("Email: %s\n", atual->email);
+        printf("Tipo de utilizador: %s\n", atual->tipo_utilizador == '1' ? "cliente" : "gestor");
+        printf("----------------------\n");
+        atual = atual->proximo;
+    }
+}
+
+// Função que verifica se um utilizador com um determinado email existe na lista ligada
+int existeUtilizadores(Utilizadores* inicio, char* email) {
+    Utilizadores* atual = inicio;
+
+    while (atual != NULL) {
+        if (strcmp(atual->email, email) == 0) {
+            return 1; // encontrado
+        }
+        atual = atual->proximo;
+    }
+
+    return 0; // não encontrado
+}
+
+// Função que remove um utilizador da lista ligada com base no email
 Utilizadores* removerUtilizadores(Utilizadores* inicio, char* email) {
     Utilizadores* atual = inicio;
     Utilizadores* anterior = NULL;
@@ -491,7 +578,7 @@ Utilizadores* removerUtilizadores(Utilizadores* inicio, char* email) {
     while (atual != NULL) {
         if (strcmp(atual->email, email) == 0) {
             if (anterior == NULL) {
-                inicio = atual->proximo;
+                inicio = atual->proximo; // primeiro nó
             }
             else {
                 anterior->proximo = atual->proximo;
@@ -506,50 +593,77 @@ Utilizadores* removerUtilizadores(Utilizadores* inicio, char* email) {
     return inicio;
 }
 
-int guardarUtilizadores(Utilizadores* inicio) {
-    FILE* fp;
-    fp = fopen("utilizadores.txt", "w");
-    if (fp == NULL) {
-        printf("Erro ao abrir arquivo.\n");
-        return 0;
-    }
-    Utilizadores* atual = inicio;
-    while (atual != NULL) {
-        fprintf(fp, "%s;%s;%d\n", atual->email, atual->password, atual->tipo);
-        atual = atual->proximo;
-    }
-    fclose(fp);
-    return 1;
-}
-
-Utilizadores* lerUtilizadores() {
-    FILE* fp;
-    fp = fopen("utilizadores.txt", "r");
-    if (fp == NULL) {
-        printf("Erro ao abrir arquivo.\n");
-        return NULL;
-    }
-    Utilizadores* inicio = NULL;
-    char linha[1024];
-    while (fgets(linha, 1024, fp) != NULL) {
-        char* email = strtok(linha, ";");
-        char* password = strtok(NULL, ";");
-        char* tipo_str = strtok(NULL, ";");
-        int tipo = atoi(tipo_str);
-        inicio = inserirUtilizadores(inicio, email, password, tipo);
-    }
-    fclose(fp);
-    return inicio;
-}
-
+// Função que verifica se um utilizador com um determinado email e senha existe na lista ligada
 int loginUtilizador(Utilizadores* inicio, char* email, char* password) {
     Utilizadores* atual = inicio;
+
     while (atual != NULL) {
         if (strcmp(atual->email, email) == 0 && strcmp(atual->password, password) == 0) {
-            return atual->tipo;
+            return atual->tipo_utilizador; // encontrado
         }
         atual = atual->proximo;
     }
-    return -1;
+
+    return 0; // não encontrado
 }
-*/
+
+// Função que grava os dados dos utilizadores em um arquivo de texto
+int guardarUtilizadores(Utilizadores* inicio) {
+    FILE* arquivo;
+    arquivo = fopen("utilizadores.txt", "w");
+    if (arquivo == NULL) {
+        return 0; // erro ao abrir arquivo
+    }
+
+    Utilizadores* atual = inicio;
+    while (atual != NULL) {
+        fprintf(arquivo, "%s;%s;%c\n", atual->email, atual->password, atual->tipo_utilizador);
+        atual = atual->proximo;
+    }
+
+    fclose(arquivo);
+    return 1; // sucesso
+}
+
+
+
+// Função que lê os dados dos utilizadores de um arquivo de texto e os retorna como uma lista ligada
+Utilizadores* lerUtilizadores() {
+    FILE* arquivo;
+    arquivo = fopen("utilizadores.txt", "r");
+    if (arquivo == NULL) {
+        return NULL; // erro ao abrir arquivo
+    }
+
+    Utilizadores* inicio = NULL;
+    Utilizadores* atual = NULL;
+    Utilizadores* novo = NULL;
+    char linha[150];
+    char* token;
+
+    while (fgets(linha, 150, arquivo)) {
+        novo = (Utilizadores*)malloc(sizeof(Utilizadores));
+        novo->proximo = NULL;
+
+        token = strtok(linha, ";");
+        strcpy(novo->email, token);
+
+        token = strtok(NULL, ";");
+        strcpy(novo->password, token);
+
+        token = strtok(NULL, ";");
+        novo->tipo_utilizador = token[0];
+
+        if (inicio == NULL) {
+            inicio = novo;
+            atual = novo;
+        }
+        else {
+            atual->proximo = novo;
+            atual = novo;
+        }
+    }
+
+    fclose(arquivo);
+    return inicio;
+}

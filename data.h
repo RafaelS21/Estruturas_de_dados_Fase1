@@ -8,6 +8,7 @@ typedef struct Veiculos
 	float bateria;
 	float autonomia;
 	int geo;
+	int alugado;
 	struct Veiculos* seguinte;
 }Veiculos;
 
@@ -23,7 +24,7 @@ Veiculos* lerVeiculos();
 typedef struct Clientes {
 	int codigo; // código do cliente
 	char nome[50];
-	char nif[50];
+	char nif[10];
 	char email[50];
 	struct Clientes* seguinte;
 } Clientes;
@@ -57,14 +58,15 @@ Gestores* lerGestores();
 typedef struct Utilizadores {
     char email[50];
     char password[50];
-    int tipo; // 1 = cliente, 2 = gestor
+    char tipo_utilizador; // 1 = cliente, 2 = gestor
     struct Utilizadores* proximo;
 } Utilizadores;
 
-Utilizadores* inserirUtilizadores(Utilizadores* inicio, char* email, char* password, int tipo);
+Utilizadores* inserirUtilizadores(Utilizadores* inicio, char* email, char* password, char tipo_utilizador);
 void listarUtilizadores(Utilizadores* inicio);
 int existeUtilizadores(Utilizadores* inicio, char* email);
 Utilizadores* removerUtilizadores(Utilizadores* inicio, char* email);
+int loginUtilizador(Utilizadores* inicio, char* email, char* password);
 
 int guardarUtilizadores(Utilizadores* inicio);
 Utilizadores* lerUtilizadores();
