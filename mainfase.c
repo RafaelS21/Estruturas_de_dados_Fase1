@@ -28,7 +28,7 @@ int main()
     int option;
 
 start:
-    printf("Please select an option:\n");
+    printf("Selecione uma opção, por favor!\n");
     printf("1. Criar conta\n");
     printf("2. Login\n");
     printf("3. Sair do programa\n");
@@ -81,8 +81,8 @@ start:
             // loop principal do menu do cliente
             while (1) {
                 printf("\nSelecione uma opção:\n");
-                printf("1. Alugar um veículo\n");
-                printf("2. Verificar histórico de aluguéis\n");
+                printf("1. Alugar um veiculo\n");
+                printf("2. Verificar histórico de alugueres\n");
                 printf("3. Sair do menu de cliente\n");
                 scanf("%d", &utilizadorEscolha);
 
@@ -135,7 +135,7 @@ start:
                         float bateria, autonomia;
                         printf("Digite o tipo do veiculo: ");
                         scanf("%s", &tipo);
-                        printf("Digite a capacidade da bateria: ");
+                        printf("Digite a bateria da bateria: ");
                         scanf("%f", &bateria);
                         printf("Digite a autonomia do veiculo: ");
                         scanf("%f", &autonomia);

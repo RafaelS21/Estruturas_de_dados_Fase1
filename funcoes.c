@@ -34,7 +34,7 @@ void listarVeiculos(Veiculos* inicio) {
     }
     printf("Lista de veículos:\n");
     while (inicio != NULL) {
-        printf("%d %s %f %f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
+        printf("%d %s %.2f %.2f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
         inicio = inicio->seguinte;
     }
 }
@@ -125,7 +125,7 @@ void alugar_veiculo(Veiculos* lista_veiculos, Clientes* lista_clientes) {
     veiculo_atual->cliente = codigo_cliente;
     veiculo_atual->tempo_aluguel = tempo_aluguel;
     // criar novo nó para a lista de alugueis
-    Aluguel* novo_aluguel = (Aluguel*)malloc(sizeof(Aluguel));
+    Aluguel* novo_aluguel = (Aluguel*) malloc(sizeof(Aluguel));
     novo_aluguel->codigo_veiculo = codigo_veiculo;
     novo_aluguel->tempo = tempo_aluguel;
     novo_aluguel->valor = valor_aluguel;
@@ -135,8 +135,7 @@ void alugar_veiculo(Veiculos* lista_veiculos, Clientes* lista_clientes) {
     Aluguel* aluguel_atual = cliente_atual->alugueis;
     if (aluguel_atual == NULL) {
         cliente_atual->alugueis = novo_aluguel;
-    }
-    else {
+    } else {
         while (aluguel_atual->seguinte != NULL) {
             aluguel_atual = aluguel_atual->seguinte;
         }
@@ -234,7 +233,7 @@ Veiculos* lerVeiculos()
 
     Veiculos* inicio = NULL;
 
-    while (fscanf(ficheiro, "%d %s %f %f", &codigo, tipo, &bateria, &autonomia) != EOF)
+    while (fscanf(ficheiro, "%d %s %.2f %.2f", &codigo, tipo, &bateria, &autonomia) != EOF)
     {
         inicio = inserirVeiculos(inicio, codigo, tipo, bateria, autonomia);
     }
