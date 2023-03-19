@@ -27,18 +27,124 @@ Veiculos* inserirVeiculos(Veiculos* inicio, int codigo, char tipo[], float bater
 
 // Listar os veiculso adicionados:
 
-void listarVeiculos(Veiculos* inicio)
-{
+void listarVeiculos(Veiculos* inicio) {
     if (inicio == NULL) {
         printf("A lista de veículos está vazia.\n");
         return;
     }
     printf("Lista de veículos:\n");
-    while (inicio != NULL)
-    {
+    while (inicio != NULL) {
         printf("%d %s %f %f\n", inicio->codigo, inicio->tipo, inicio->bateria, inicio->autonomia);
         inicio = inicio->seguinte;
     }
+}
+
+void ordenarVeiculosPorAutonomia(Veiculos* inicio) {
+    if (inicio == NULL) {
+        printf("A lista de veículos está vazia.\n");
+        return;
+    }
+    int trocou = 0;
+    do {
+        trocou = 0;
+        Veiculos* atual = inicio;
+        Veiculos* anterior = NULL;
+        while (atual->seguinte != NULL) {
+            if (atual->autonomia < atual->seguinte->autonomia) {
+                Veiculos* temp = atual->seguinte;
+                atual->seguinte = atual->seguinte->seguinte;
+                temp->seguinte = atual;
+                if (anterior != NULL) {
+                    anterior->seguinte = temp;
+                }
+                else {
+                    inicio = temp;
+                }
+                anterior = temp;
+                trocou = 1;
+            }
+            else {
+                anterior = atual;
+                atual = atual->seguinte;
+            }
+        }
+    } while (trocou);
+}
+
+void alugar_veiculo(Veiculos* lista_veiculos, Clientes* lista_clientes) {
+    int codigo_cliente, codigo_veiculo, tempo_aluguel;
+    float valor_aluguel;
+    Veiculos* veiculo_atual = lista_veiculos;
+    Clientes* cliente_atual = lista_clientes;
+
+    // pedir código do cliente e do veículo
+    printf("Insira o código do cliente: ");
+    scanf("%d", &codigo_cliente);
+    printf("Insira o código do veículo: ");
+    scanf("%d", &codigo_veiculo);
+
+    // verificar se o código do cliente é válido
+    while (cliente_atual != NULL) {
+        if (cliente_atual->codigo == codigo_cliente) {
+            break;
+        }
+        cliente_atual = cliente_atual->seguinte;
+    }
+    if (cliente_atual == NULL) {
+        printf("Código de cliente inválido.\n");
+        return;
+    }
+
+    // verificar se o código do veículo é válido
+    while (veiculo_atual != NULL) {
+        if (veiculo_atual->codigo == codigo_veiculo) {
+            break;
+        }
+        veiculo_atual = veiculo_atual->seguinte;
+    }
+    if (veiculo_atual == NULL) {
+        printf("Código de veículo inválido.\n");
+        return;
+    }
+
+    // verificar se o veículo já está alugado
+    if (veiculo_atual->alugado == 1) {
+        printf("Veículo já está alugado.\n");
+        return;
+    }
+
+    // pedir tempo de aluguel
+    printf("Por quantas horas deseja alugar o veículo? ");
+    scanf("%d", &tempo_aluguel);
+
+    // calcular valor do aluguel
+    valor_aluguel = veiculo_atual->autonomia * tempo_aluguel;
+
+    // atualizar informações do veículo
+    veiculo_atual->alugado = 1;
+    veiculo_atual->cliente = codigo_cliente;
+    veiculo_atual->tempo_aluguel = tempo_aluguel;
+    // criar novo nó para a lista de alugueis
+    Aluguel* novo_aluguel = (Aluguel*)malloc(sizeof(Aluguel));
+    novo_aluguel->codigo_veiculo = codigo_veiculo;
+    novo_aluguel->tempo = tempo_aluguel;
+    novo_aluguel->valor = valor_aluguel;
+    novo_aluguel->seguinte = NULL;
+
+    // adicionar nó à lista de alugueis do cliente correspondente
+    Aluguel* aluguel_atual = cliente_atual->alugueis;
+    if (aluguel_atual == NULL) {
+        cliente_atual->alugueis = novo_aluguel;
+    }
+    else {
+        while (aluguel_atual->seguinte != NULL) {
+            aluguel_atual = aluguel_atual->seguinte;
+        }
+        aluguel_atual->seguinte = novo_aluguel;
+    }
+
+    // informar sucesso e mostrar valor do aluguel
+    printf("Veículo alugado com sucesso. Valor do aluguel: R$ %.2f\n", valor_aluguel);
 }
 
 

@@ -8,7 +8,9 @@ typedef struct Veiculos
 	float bateria;
 	float autonomia;
 	int geo;
-	int alugado;
+	int alugado; // flag que indica se o veículo está alugado ou não (0 = não alugado, 1 = alugado)
+	int cliente; // código do cliente que alugou o veículo (apenas válido se o veículo estiver alugado)
+	int tempo_aluguel; // tempo de aluguel em horas (apenas válido se o veículo estiver alugado)
 	struct Veiculos* seguinte;
 }Veiculos;
 
@@ -26,7 +28,9 @@ typedef struct Clientes {
 	char nome[50];
 	char nif[10];
 	char email[50];
+	struct Aluguel* alugueis; // lista de alugueis realizados pelo cliente
 	struct Clientes* seguinte;
+	
 } Clientes;
 
 Clientes* inserirClientes(Clientes* inicio, int codigo, char nome[], char nif[], char email[]); // Inserção de um novo registo
@@ -70,3 +74,11 @@ int loginUtilizador(Utilizadores* inicio, char* email, char* password);
 
 int guardarUtilizadores(Utilizadores* inicio);
 Utilizadores* lerUtilizadores();
+
+typedef struct Aluguel {
+	int codigo_veiculo; // código do veículo alugado
+	int tempo; // tempo de aluguel em horas
+	float valor; // valor do aluguel
+	struct Aluguel* seguinte;
+} Aluguel;
+

@@ -1,5 +1,3 @@
-rafa;2;2
-silva;2;1
-2;2;2
-miuny;1;1
-kkk;1;1
+rafa;2;1
+rafaa;2;2
+silva;1;1
