@@ -1,6 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include "data.h"
+#include <stdbool.h>
 
 int main()
 {
@@ -14,18 +15,24 @@ int main()
     char nif[10];
     char email[50];
     float bateria;
+    float valor;
     float autonomia;
-    int geo;
+    char localizacao[50];
     Veiculos* listaVeiculos = NULL;
     Clientes* listaClientes = NULL;
     Gestores* listaGestores = NULL;
+    Clientes* inicio = NULL;// Inicializa a lista vazia
     Utilizadores* listaUtilizadores = NULL;
+    Aluguer* listaAlugueres = NULL;
     listaVeiculos = lerVeiculos();
     listaClientes = lerClientes();
     listaGestores = lerGestores();
     listaUtilizadores = lerUtilizadores();
-
+    float taxa_aluguel = 10.0;
     int option;
+    Grafo* grafo = NULL;
+
+
 
 start:
     printf("Selecione uma opção, por favor!\n");
@@ -82,18 +89,134 @@ start:
             while (1) {
                 printf("\nSelecione uma opção:\n");
                 printf("1. Alugar um veiculo\n");
-                printf("2. Verificar histórico de alugueres\n");
-                printf("3. Sair do menu de cliente\n");
+                printf("2. Carregar conta\n");
+                printf("3. Verificar histórico de alugueres\n");
+                printf("4. Sair do menu de cliente\n");
                 scanf("%d", &utilizadorEscolha);
 
                 switch (utilizadorEscolha) {
                 case 1:
-                    alugar_veiculo(email);
+                {
+                    int codigo_veiculo;
+                    float valor_km = 0.5; // Exemplo de valor por quilômetro fixo
+                    int distancia_km = 50; // Exemplo de distância percorrida fixa
+
+                    printf("Insira o código do veículo: ");
+                    scanf("%d", &codigo_veiculo);
+
+                    // Verificar se o veículo existe
+                    if (!existeVeiculos(listaVeiculos, codigo_veiculo)) {
+                        printf("Veículo não encontrado.\n");
+                        break;
+                    }
+
+                    // Verificar se o veículo já está alugado
+                    if (veiculoEstaAlugado(listaAlugueres, codigo_veiculo)) {
+                        printf("O veículo já está alugado. Por favor, escolha outro veículo.\n");
+                        break;
+                    }
+
+                    // Obter o valor por quilômetro do veículo
+                    if (valor_km == 0.0) {
+                        printf("Valor por quilômetro não encontrado para o veículo.\n");
+                        break;
+                    }
+
+                    printf("Insira a distância percorrida em quilômetros: ");
+                    scanf("%d", &distancia_km);
+
+                    float valor = valor_km * distancia_km;
+
+                    printf("Valor a pagar: %.2f\n", valor);
+
+                    // Alugar o veículo
+                    listaAlugueres = alugarVeiculo(listaAlugueres, codigo_veiculo, distancia_km, valor, valor_km);
+                    printf("Veículo alugado com sucesso.\n");
+
+                    // Abrir o arquivo em modo de escrita (append)
+                    FILE* arquivo = fopen("alugueres.txt", "a");
+                    if (arquivo == NULL) {
+                        printf("Erro ao abrir o arquivo de histórico.\n");
+                        break;
+                    }
+
+                    // Escrever os detalhes do aluguel no arquivo
+                    fprintf(arquivo, "Código do veículo: %d\n", codigo_veiculo);
+                    fprintf(arquivo, "Distância percorrida: %d\n", distancia_km);
+                    fprintf(arquivo, "Valor: %.2f\n\n", valor);
+
+                    // Fechar o arquivo
+                    fclose(arquivo);
+
                     break;
+                }
                 case 2:
-                    
+                {
+                    int codigo;
+                    printf("Digite o código do cliente: ");
+                    scanf("%d", &codigo);
+
+                    // Verificar se o cliente existe na lista de clientes
+                    int clienteExiste = existeClientes(listaClientes, codigo);
+                    if (clienteExiste == 0) {
+                        printf("Cliente não encontrado.\n");
+                        break;
+                    }
+
+                    float saldo;
+                    char valor_str[100];
+                    printf("Digite o valor a ser carregado: ");
+                    scanf("%s", valor_str);
+
+                    if (sscanf(valor_str, "%f", &saldo) != 1) {
+                        printf("Valor inválido.\n");
+                        break;
+                    }
+
+                    // Carregar o saldo do cliente
+                    listaClientes = carregarSaldo(listaClientes, codigo, saldo);
                     break;
+                }
+
+
                 case 3:
+
+                {
+                    // Abrir o arquivo em modo de leitura
+                    FILE* arquivo = fopen("alugueres.txt", "r");
+                    if (arquivo == NULL) {
+                        printf("Nenhum histórico de aluguer encontrado.\n");
+                        break;
+                    }
+
+                    // Ler e exibir o conteúdo do arquivo
+                    char linha[100];
+                    printf("Histórico de aluguer:\n");
+                    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+                        printf("%s", linha);
+                    }
+
+                    // Fechar o arquivo
+                    fclose(arquivo);
+
+                    break;
+                }
+
+                case 4:
+                    printf("Digite o código do cliente: ");
+                    scanf("%d", &codigo);
+
+                    printf("Digite o valor a ser carregado: ");
+                    scanf("%f", &valor);
+
+                    listaClientes = carregarSaldo(listaClientes, codigo, valor);
+                    guardarClientes(listaClientes);
+
+                    printf("Saldo carregado com sucesso.\n");
+                    continue;
+
+
+                case 5:
                     // sair do menu do cliente
                     goto start;
                 default:
@@ -104,6 +227,8 @@ start:
         else if (tipo == '2') {
             printf("Bem-vindo, gestor!\n");
             int gestorEscolha;
+
+            system("CLS");
 
             // loop principal do menu do gestor
             while (1) {
@@ -118,40 +243,49 @@ start:
                 printf("8. Adicionar gestor\n");
                 printf("9. Listar gestores\n");
                 printf("10. Remover gestor\n");
-                printf("11. Sair\n");
+                printf("11. Gerir localizacao\n");
+                printf("12. Sair\n");
                 printf("\nEscolha uma opcao:\n");
                 scanf("%d", &gestorEscolha);
 
                 switch (gestorEscolha) {
                 case 1:
-                    printf("Digite o codigo do veiculo: ");
+                {
+                    int codigo;
+                    printf("Digite o código do veículo: ");
                     scanf("%d", &codigo);
+
                     // Verificar se o veículo já existe
                     if (existeVeiculos(listaVeiculos, codigo)) {
-                        printf("O veiculo com o codigo %d ja existe na lista.\n", codigo);
+                        printf("O veículo com o código %d já existe na lista.\n", codigo);
                     }
                     else {
-                        char tipo[50]; // alteração: declaração do array de caracteres tipo aqui
+                        char tipo[50];
                         float bateria, autonomia;
-                        printf("Digite o tipo do veiculo: ");
-                        scanf("%s", &tipo);
-                        printf("Digite a bateria da bateria: ");
+                        printf("Digite o tipo do veículo: ");
+                        scanf("%s", tipo);
+                        printf("Digite a bateria do veículo: ");
                         scanf("%f", &bateria);
-                        printf("Digite a autonomia do veiculo: ");
+                        printf("Digite a autonomia do veículo: ");
                         scanf("%f", &autonomia);
-                        listaVeiculos = inserirVeiculos(listaVeiculos, codigo, tipo, bateria, autonomia);
-                        printf("Veiculo guardado com sucesso\n");
 
+                        // Adicionar a funcionalidade de inserir uma localização usando o what3words
+                        char localizacao[50];
+                        printf("Digite a localização do veículo (what3words): ");
+                        scanf("%s", localizacao);
+
+                        // Criar o novo veículo com os dados fornecidos
+                        listaVeiculos = inserirVeiculos(listaVeiculos, codigo, tipo, bateria, autonomia, localizacao); // O último argumento '0' representa que o veículo não está alugado
+                        printf("Veículo guardado com sucesso.\n");
                         guardarVeiculos(listaVeiculos);
-
-
-
                     }
+
                     continue;
                     break;
+                }
+
 
                 case 2:
-                    ordenarVeiculosPorAutonomia(listaVeiculos);
                     listarVeiculos(listaVeiculos);
                     continue;
 
@@ -181,7 +315,9 @@ start:
                     guardarClientes(listaClientes);
                     continue;
 
+
                 case 5:
+
                     listarClientes(listaClientes);
                     continue;
 
@@ -241,14 +377,62 @@ start:
                     printf("Gestor com o %d removido com sucesso.\n", codigo);
                     continue;
                 }
+                system("CLS");
 
 
-    case 110:
-        printf("Exiting the application...\n");
-        break;
+
+    case 11:
+    {
+        int escolha_menu = 0;
+        while (escolha_menu != 2) {
+
+            printf("\nMenu de Gerenciamento de Localizacao:\n");
+            printf("1. Listar Grafos\n");
+            printf("2. Alterar vertice a partir do ID\n");
+            printf("3. Alterar arestas a partir do ID\n");
+            printf("4. Sair do Menu de Gerenciamento de Localizacao\n");
+            printf("\nEscolha uma opcao:\n");
+            scanf("%d", &escolha_menu);
+
+
+            switch (escolha_menu) {
+
+                {
+            case 1:
+            {
+                lerVerticesDeArquivo(grafo, "grafos.txt");
+                listarGrafoDeArquivo("grafos.txt");
+
+                break;
+
             }
 
-            while (option != 3);
+            case 2:
+            {
+                int id_vertice;
+                printf("ID do vértice a ser alterado: ");
+                scanf("%d", &id_vertice);
+                alterarVerticePorID(grafo, id_vertice);
+                break;
+            }
+            case 3:
+            {
+                int id_vertice;
+                printf("ID do vértice para alterar as arestas: ");
+                scanf("%d", &id_vertice);
+                alterarArestasPorID(grafo, id_vertice);
+                break;
+            }
+            default:
+                printf("Opção inválida.\n");
+                }
+
+                break;
+            }
+
+        }
+    }
+            }
         }
     }
 }
